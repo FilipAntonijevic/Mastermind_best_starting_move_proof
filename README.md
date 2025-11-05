@@ -34,9 +34,13 @@ AAAA, AAAB, AABB, AABC, ABCD
 After evaluation in Isabelle, the results are:
 
 AABC  - 185.27
+
 ABCD  - 188.19
+
 AABB  - 204.53            
+
 AAAB  - 235.95
+
 AAAA  - 511.98
 
 According to this definition, **AABC** produces the smallest average remaining search space
