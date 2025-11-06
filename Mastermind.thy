@@ -77,7 +77,7 @@ AAAA, AAAB, AABB, AABC, ABCD
 *)
 
 theory Mastermind
-  imports Main "HOL.Real"
+  imports Main "HOL.Real" "HOL-Library.Multiset"
 begin
 
 datatype alphabet = A | B | C | D | E | F
@@ -92,18 +92,28 @@ fun replicateM :: "nat \<Rightarrow> 'a list \<Rightarrow> 'a list list" where
 definition all_codes_list_ABCDEF :: "code list" where
   "all_codes_list_ABCDEF = replicateM 4 [A, B, C, D, E, F]"
 
-(*----Bulls and Cows----*)
+
+                              (*==== Bulls and Cows ====*)
 
 (*--returns number of times letter X appeared in a code--*)
 fun count_letters :: "alphabet \<Rightarrow> code \<Rightarrow> nat" where
   "count_letters c [] = 0" |
   "count_letters c (x#xs) = (if x = c then 1 else 0) + count_letters c xs"
 
+lemma count_letters_le_length:
+  "count_letters c xs \<le> length xs"
+  by (induction xs) auto
+
+
 (*--returns number of correct letters in the correct places--*)
 fun bulls :: "code \<Rightarrow> code \<Rightarrow> nat" where
   "bulls [] [] = 0" |
   "bulls (x#xs) (y#ys) = (if x = y then 1 else 0) + bulls xs ys" |
   "bulls _ _ = 0"
+
+lemma bulls_le_length:
+  "length g = length s \<Longrightarrow> bulls g s \<le> length g"
+  by (induction g s rule: bulls.induct) auto
 
 (*--returns number of correct letters in the incorrect places--*)
 definition cows :: "code \<Rightarrow> code \<Rightarrow> nat" where
@@ -117,22 +127,50 @@ definition cows :: "code \<Rightarrow> code \<Rightarrow> nat" where
 definition feedback :: "code \<Rightarrow> code \<Rightarrow> (nat\<times>nat)" where
   "feedback g s = (bulls g s, cows g s)"
 
-(*----S after subset----*)
 
+                                 (*==== S after subset ====*)
 
 (*--returns S after--*)
 fun S_after :: "code \<Rightarrow> code list \<Rightarrow> (nat\<times>nat) \<Rightarrow> code list" where
   "S_after g codes r = filter (\<lambda>s. feedback g s = r) codes"
 
+lemma S_after_subset:
+  "set (S_after g codes r) \<subseteq> set codes"
+  by simp
+
+lemma S_after_correct:
+  "\<forall>s \<in> set (S_after g codes r). feedback g s = r"
+  by simp
+
+lemma S_after_filter_stable:
+  "S_after g (S_after g codes r) r = S_after g codes r"
+  by simp
+
+lemma S_after_valid_feedback:
+  assumes "s \<in> set (S_after g codes r)"
+  shows "feedback g s = r"
+  using assms by simp
+
 (*--returns list of values, where each value is size of S_after, for each possible feedback r--*)
 definition remaining_sizes :: "code \<Rightarrow> code list \<Rightarrow> nat list" where
   "remaining_sizes g codes = map (\<lambda>r. length (S_after g codes r)) (map (feedback g) codes)"
+
+lemma length_remaining_sizes:
+  "length (remaining_sizes g codes) = length codes"
+  by (simp add: remaining_sizes_def)
+
+lemma remaining_sizes_nonneg:
+  "\<forall>n \<in> set (remaining_sizes g codes). n \<ge> 0"
+  by (simp add: remaining_sizes_def)
 
 (*--returns average remaining size of all possible S_after subsets--*)
 definition average_remaining :: "code \<Rightarrow> code list \<Rightarrow> real" where
   "average_remaining g codes =
      (let sizes = remaining_sizes g codes
       in (sum_list (map real sizes)) / real (length sizes))"
+
+
+                          (*==== Checking all possible candidates ====*)
 
 (*--list of all candidate best guesses--*)
 definition all_guesses :: "code list" where

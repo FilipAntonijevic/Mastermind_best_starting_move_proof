@@ -1,7 +1,3 @@
-theory Mastermind
-  imports Main "HOL.Real"
-begin
-
 (*
 
                           ===== Mastermind - best starting move =====
@@ -79,6 +75,10 @@ Finally we can reduce all possible combinations to these candidates:
 AAAA, AAAB, AABB, AABC, ABCD
 
 *)
+
+theory Mastermind
+  imports Main "HOL.Real"
+begin
 
 datatype alphabet = A | B | C | D | E | F
 type_synonym code = "alphabet list"
